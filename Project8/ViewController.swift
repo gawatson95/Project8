@@ -17,8 +17,14 @@ class ViewController: UIViewController {
     
     var activatedButtons = [UIButton]()
     var solutions = [String]()
+    var nextLevelCounter = 0
     
-    var score = 0
+    var score = 0 {
+        didSet {
+            scoreLabel.text = "Score: \(score)"
+        }
+    }
+    
     var level = 1
     
     let padding: CGFloat = 100
@@ -121,6 +127,8 @@ class ViewController: UIViewController {
         
         let buttonsView = UIView()
         buttonsView.translatesAutoresizingMaskIntoConstraints = false
+        buttonsView.layer.borderWidth = 1
+        buttonsView.layer.borderColor = UIColor.lightGray.cgColor
         view.addSubview(buttonsView)
         
         NSLayoutConstraint.activate([
@@ -167,21 +175,32 @@ class ViewController: UIViewController {
         guard let answerText = currentAnswer.text else { return }
         
         if let solutionPosition = solutions.firstIndex(of: answerText) {
-            activatedButtons.removeAll()
-            
-            var splitAnswers = answersLabel.text?.components(separatedBy: "\n")
-            
-            splitAnswers?[solutionPosition] = answerText
-            answersLabel.text = splitAnswers?.joined(separator: "\n")
-            
-            currentAnswer.text = ""
             score += 1
             
-            if score % 7 == 0 {
-                let ac = UIAlertController(title: "Well done!", message: "Press continue to move to the next level.", preferredStyle: .alert)
-                ac.addAction(UIAlertAction(title: "Continue", style: .default, handler: levelUp))
-                present(ac, animated: true)
+            var splitAnswers = answersLabel.text?.components(separatedBy: "\n")
+            splitAnswers?[solutionPosition] = answerText
+            answersLabel.text = splitAnswers?.joined(separator: "\n")
+            nextLevelCounter += 1
+        } else {
+            score -= 1
+            
+            for button in activatedButtons {
+                button.isHidden = false
             }
+            
+            let ac = UIAlertController(title: "Oops!", message: "That was not an answer. Guess again.", preferredStyle: .alert)
+            ac.addAction(UIAlertAction(title: "Try Again", style: .default))
+            present(ac, animated: true)
+            
+        }
+            
+        currentAnswer.text = ""
+        activatedButtons.removeAll()
+        
+        if nextLevelCounter == 7 {
+            let ac = UIAlertController(title: "Well done!", message: "Press continue to move to the next level.", preferredStyle: .alert)
+            ac.addAction(UIAlertAction(title: "Continue", style: .default, handler: levelUp))
+            present(ac, animated: true)
         }
     }
     
